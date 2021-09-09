@@ -32,13 +32,15 @@ public class BetterSceneManager : MonoBehaviour
     /// </summary>
     public static Action<int> OnSceneStarting;
 
-    int scene;
+
+    [SerializeField]
+    string sceneName;
 
     private static Dictionary<int, AsyncOperation> asyncops = new Dictionary<int, AsyncOperation>();
     private static int curDesiredScene = 0;
 
-    
-    public void Changescene(string sceneName)
+
+    public static void Changescene(string sceneName)
     {
         if (BuildIndexMatrix.TryGetSceneBuildIndex(sceneName, out var index))
         {
@@ -50,7 +52,14 @@ public class BetterSceneManager : MonoBehaviour
             Debug.LogError("No scene called " + sceneName + " is specified in the BuildIndexMatrix");
         }
     }
-
+    /// <summary>
+    /// Changes the scene based on the name specified in this object
+    /// <see cref="sceneName"/>
+    /// </summary>
+    public void ChangeScne()
+    {
+        Changescene(sceneName);
+    }
 
     /// <summary>
     /// Changes the scene to the provided toom index
@@ -61,7 +70,7 @@ public class BetterSceneManager : MonoBehaviour
         if (instance == null) return;
         curDesiredScene = scene;
 
-        
+
         instance.StartCoroutine(Load((int)scene));
         StartScene(curDesiredScene);
     }
