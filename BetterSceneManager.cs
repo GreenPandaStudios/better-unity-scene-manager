@@ -4,9 +4,17 @@ using UnityEngine;
 using System;
 using UnityEngine.SceneManagement;
 
-
 public class BetterSceneManager : MonoBehaviour
 {
+    /// <summary>
+    /// Called when the scene with build index specified is loading
+    /// </summary>
+    public static Action<int> OnSceneLoading;
+    /// <summary>
+    /// Called when the scene with build index specified has loaded
+    /// </summary>
+    public static Action<int> OnSceneLoaded;
+
     static BetterSceneManager instance;
     private void Awake()
     {
@@ -19,8 +27,10 @@ public class BetterSceneManager : MonoBehaviour
 
     }
 
-
-    public static Action OnSceneChanging;
+    /// <summary>
+    /// Called when the scene with build index specified is starting
+    /// </summary>
+    public static Action<int> OnSceneStarting;
 
     int scene;
 
@@ -33,6 +43,7 @@ public class BetterSceneManager : MonoBehaviour
         if (BuildIndexMatrix.TryGetSceneBuildIndex(sceneName, out var index))
         {
             Changescene(index);
+
         }
         else
         {
@@ -50,6 +61,7 @@ public class BetterSceneManager : MonoBehaviour
         if (instance == null) return;
         curDesiredScene = scene;
 
+        
         instance.StartCoroutine(Load((int)scene));
         StartScene(curDesiredScene);
     }
@@ -57,12 +69,20 @@ public class BetterSceneManager : MonoBehaviour
     {
         if (!asyncops.ContainsKey(scene))
         {
+
+            OnSceneLoading?.Invoke(scene);
+
+
             //otherwise add to the pending scenes
             AsyncOperation sceneOp = SceneManager.LoadSceneAsync(scene, LoadSceneMode.Single);
             asyncops.Add(scene, sceneOp);
             sceneOp.allowSceneActivation = false;
 
             while (!sceneOp.isDone) { yield return null; }
+
+
+            OnSceneLoaded?.Invoke(scene);
+
             asyncops.Remove(scene);
         }
     }
@@ -73,6 +93,7 @@ public class BetterSceneManager : MonoBehaviour
         //make sure we deactivate all other scenes
         asyncops[scene].completed += (_) =>
         {
+            OnSceneStarting?.Invoke(scene);
             SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(scene));
         };
         //remove from dictionary and enable the scene
